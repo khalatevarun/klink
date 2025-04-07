@@ -1,19 +1,23 @@
 package com.url.url_shortner_sb.service;
 
+import com.url.url_shortner_sb.dtos.ClickEventDTO;
 import com.url.url_shortner_sb.dtos.UrlMappingDTO;
 import com.url.url_shortner_sb.models.UrlMapping;
 import com.url.url_shortner_sb.models.User;
+import com.url.url_shortner_sb.repository.ClickEventRepository;
 import com.url.url_shortner_sb.repository.UrlMappingRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 public class UrlMappingService {
 
     private UrlMappingRepository urlMappingRepository;
+    private ClickEventRepository clickEventRepository;
 
     public UrlMappingService(UrlMappingRepository urlMappingRepository) {
         this.urlMappingRepository = urlMappingRepository;
@@ -56,5 +60,25 @@ public class UrlMappingService {
         return urlMappingRepository.findByUser(user).stream()
                 .map(this::convertToDto)
                 .toList();
+    }
+
+    public List<ClickEventDTO> getClickEventsByDate(String shortUrl, LocalDateTime start, LocalDateTime end){
+        UrlMapping urlMapping = urlMappingRepository.findByShortUrl(shortUrl);
+        if(urlMapping != null){
+                return clickEventRepository.findByUrlMappingAndClickDateBetween(urlMapping, start, end)
+                        .stream()
+                        .collect(Collectors
+                                .groupingBy(click -> click.getClickDate().toLocalDate(), Collectors.counting()))
+                        .entrySet().stream()
+                        .map(entry -> {
+                            ClickEventDTO clickEventDTO = new ClickEventDTO();
+                            clickEventDTO.setClickDate(entry.getKey());
+                            clickEventDTO.setCount(entry.getValue());
+                            return clickEventDTO;
+                        })
+                        .collect(Collectors.toList());
+
+        }
+        return null;
     }
 }
