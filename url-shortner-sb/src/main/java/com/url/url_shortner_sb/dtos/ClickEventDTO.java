@@ -11,7 +11,7 @@ public class ClickEventDTO {
         return clickDate;
     }
 
-    public void setClickDate(LocalDate clickDate) {
+    public void setClickDate(LocalDateTime clickDate) {
         this.clickDate = clickDate;
     }
 

@@ -2,14 +2,17 @@ package com.url.url_shortner_sb.service;
 
 import com.url.url_shortner_sb.dtos.ClickEventDTO;
 import com.url.url_shortner_sb.dtos.UrlMappingDTO;
+import com.url.url_shortner_sb.models.ClickEvent;
 import com.url.url_shortner_sb.models.UrlMapping;
 import com.url.url_shortner_sb.models.User;
 import com.url.url_shortner_sb.repository.ClickEventRepository;
 import com.url.url_shortner_sb.repository.UrlMappingRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -68,7 +71,7 @@ public class UrlMappingService {
                 return clickEventRepository.findByUrlMappingAndClickDateBetween(urlMapping, start, end)
                         .stream()
                         .collect(Collectors
-                                .groupingBy(click -> click.getClickDate().toLocalDate(), Collectors.counting()))
+                                .groupingBy(click -> click.getClickDate(), Collectors.counting()))
                         .entrySet().stream()
                         .map(entry -> {
                             ClickEventDTO clickEventDTO = new ClickEventDTO();
@@ -80,5 +83,24 @@ public class UrlMappingService {
 
         }
         return null;
+    }
+
+    public Map<LocalDate, Long> getTotalClicksByUserAndDate(User user, LocalDate start, LocalDate end) {
+        List<UrlMapping> urlMappings = urlMappingRepository.findByUser(user);
+        List<ClickEvent> clickEvents = clickEventRepository.findByUrlMappingInAndClickDateBetween(urlMappings, start.atStartOfDay(), end.plusDays((1)).atStartOfDay());
+        return clickEvents
+                .stream()
+                .collect(
+                        Collectors
+                                .groupingBy(click -> click
+                                        .getClickDate()
+                                        .toLocalDate(),
+                                        Collectors
+                                                .counting()));
+    }
+
+    public UrlMapping getOriginalUrl(String shortUrl) {
+        UrlMapping urlMapping = urlMappingRepository.findByShortUrl(shortUrl);
+        return urlMapping;
     }
 }
