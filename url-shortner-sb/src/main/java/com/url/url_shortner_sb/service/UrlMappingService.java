@@ -7,6 +7,7 @@ import com.url.url_shortner_sb.models.UrlMapping;
 import com.url.url_shortner_sb.models.User;
 import com.url.url_shortner_sb.repository.ClickEventRepository;
 import com.url.url_shortner_sb.repository.UrlMappingRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,7 +20,10 @@ import java.util.stream.Collectors;
 @Service
 public class UrlMappingService {
 
+    @Autowired
     private UrlMappingRepository urlMappingRepository;
+
+    @Autowired
     private ClickEventRepository clickEventRepository;
 
     public UrlMappingService(UrlMappingRepository urlMappingRepository) {
@@ -101,6 +105,17 @@ public class UrlMappingService {
 
     public UrlMapping getOriginalUrl(String shortUrl) {
         UrlMapping urlMapping = urlMappingRepository.findByShortUrl(shortUrl);
+        if(urlMapping != null){
+            urlMapping.setClickCount(urlMapping.getClickCount() + 1);
+            urlMappingRepository.save(urlMapping);
+
+            // Record click event
+            ClickEvent clickEvent = new ClickEvent();
+            clickEvent.setClickDate(LocalDateTime.now());
+            clickEvent.setUrlMapping(urlMapping);
+            clickEventRepository.save(clickEvent);
+        }
+
         return urlMapping;
     }
 }
